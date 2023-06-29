@@ -5,7 +5,7 @@ import { BOOKS_PER_PAGE, authors, genres, books } from "./data.js";
 /**
  * Handles the light/dark mode toggle functionality based on user selection.
  * @param selectedTheme - The selected theme ('day' or 'night').
- * @type {string} 
+ * @type {string}
  */
 const themeSettings = {
   day: {
@@ -56,7 +56,7 @@ openSettingsButton.addEventListener("click", () => {
   settingsOverlay.style.display = "block";
 });
 
-
+// Book preview function
 const BookPreviewModule = (function () {
   const matches = books;
   let currentPage = 1;
@@ -67,28 +67,33 @@ const BookPreviewModule = (function () {
   let startIndex = 0;
   let endIndex = BOOKS_PER_PAGE;
 
-  const createPreviewElement = ({ author, image, title, id, description, published }) => {
-    const element = document.createElement("button");
-    element.classList.add("preview");
-    element.dataset.id = id;
-    element.dataset.title = title;
-    element.dataset.description = description;
-    element.dataset.image = image;
-    element.dataset.subtitle = `${authors[author]} (${new Date(published).getFullYear()})`;
-    element.setAttribute("data-preview", id);
+  class PreviewElement extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+    }
 
-    element.innerHTML = /* html */ `
-      <div>
-        <img class="preview__image" src="${image}" />
-      </div>
-      <div class="preview__info">
-        <h3 class="preview__title">${title}</h3>
-        <div class="preview__author">${authors[author]}</div>
-      </div>
-    `;
+    connectedCallback() {
+      const { author, image, title, id, description, published } = this.dataset;
+      const subtitle = `${authors[author]} (${new Date(
+        published
+      ).getFullYear()})`;
 
-    return element;
+      this.shadowRoot.innerHTML = /* html */ `
+      <button class="preview" data-id="${id}" data-title="${title}" data-description="${description}" data-image="${image}" data-subtitle="${subtitle}" data-preview="${id}">
+        <div>
+          <img class="preview__image" src="${image}" />
+        </div>
+        <div class="preview__info">
+          <h3 class="preview__title">${title}</h3>
+          <div class="preview__author">${authors[author]}</div>
+        </div>
+      </button>
+      `;
+    }
   };
+
+  customElements.define("preview-element", PreviewElement);
 
   const displayBooks = (results) => {
     const extracted = results.slice(startIndex, endIndex);
@@ -177,9 +182,11 @@ const BookPreviewModule = (function () {
 
     document.addEventListener("click", showBookDetails);
 
-    document.querySelector("[data-list-close]").addEventListener("click", () => {
-      document.querySelector("[data-list-active]").close();
-    });
+    document
+      .querySelector("[data-list-close]")
+      .addEventListener("click", () => {
+        document.querySelector("[data-list-active]").close();
+      });
   };
 
   return {
@@ -189,8 +196,6 @@ const BookPreviewModule = (function () {
 
 // Usage
 BookPreviewModule.initialize();
-
-
 
 // Search Button
 
@@ -203,11 +208,11 @@ searchButton.addEventListener("click", () => {
 
 // Genre and Author Drop-down Lists
 
-const optionsHtml = document.createDocumentFragment()
-const optionsPlaceholder = document.createElement("option")
-optionsPlaceholder.value = "any"
-optionsPlaceholder.innerText = "All" 
-optionsHtml.appendChild(optionsPlaceholder)
+const optionsHtml = document.createDocumentFragment();
+const optionsPlaceholder = document.createElement("option");
+optionsPlaceholder.value = "any";
+optionsPlaceholder.innerText = "All";
+optionsHtml.appendChild(optionsPlaceholder);
 
 const genreSelect = document.querySelector("[data-search-genres]");
 const authorSelect = document.querySelector("[data-search-authors]");
@@ -232,7 +237,7 @@ submitSearchButton.addEventListener("click", () => {
 const cancelSearchButton = document.querySelector("[data-search-cancel]");
 cancelSearchButton.addEventListener("click", () => {
   searchBar.style.display = "none";
-})
+});
 
 // Book Results Filters
 
@@ -245,8 +250,12 @@ searchForm.addEventListener("submit", (event) => {
   const resultsFiltered = [];
 
   for (const book of books) {
-    const titleMatch = book.title.toLowerCase().includes(filters.title.toLowerCase().trim());
-    const authorMatch = book.author.toLowerCase().includes(filters.author.toLowerCase().trim());
+    const titleMatch = book.title
+      .toLowerCase()
+      .includes(filters.title.toLowerCase().trim());
+    const authorMatch = book.author
+      .toLowerCase()
+      .includes(filters.author.toLowerCase().trim());
     const genreMatch = book.genres.includes(filters.genre);
 
     if (titleMatch !== false && authorMatch !== false && genreMatch !== false) {
@@ -261,22 +270,25 @@ searchForm.addEventListener("submit", (event) => {
   bookList.innerHTML = "";
   if (resultsFiltered.length > 0) {
     for (const book of resultsFiltered) {
-      const {author, image, title} = book;
-      const previewFilters = createPreviewFilters(authors[author], image, title);
+      const { author, image, title } = book;
+      const previewFilters = createPreviewFilters(
+        authors[author],
+        image,
+        title
+      );
       bookList.appendChild(previewFilters);
     }
     //  Show No Results Pop-Up
     const message = document.querySelector("[data-list-message]");
-    message.style.display = "none"
+    message.style.display = "none";
   } else {
     const message = document.querySelector("[data-list-message]");
-    message.style.display = "block"
+    message.style.display = "block";
   }
 
   event.target.reset();
 
-
-defaultDisplay()
+  defaultDisplay();
 
   //  Scroll to Top
 
@@ -310,7 +322,7 @@ defaultDisplay()
  * Desired search filters submitted via search form get stored to memory and returned to filter results
  * Matching results are pushed to results[array] and book list is updated
  * Pop-up message is displayed for no results matching search criteria
- * Better UI functionality and UE 
+ * Better UI functionality and UE
  * More user-friendly
- * 
+ *
  */
